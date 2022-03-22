@@ -1,14 +1,18 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { hash, verify } from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
-import { use } from 'passport';
 
 @Injectable({})
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+    private config: ConfigService,
+  ) {}
 
   /**
    * 用户注册
@@ -25,10 +29,8 @@ export class AuthService {
           hash: passwordHash,
         },
       });
-      // 3. filter hash filename
-      delete user.hash;
-      // 4. return the saved user
-      return user;
+      // 3. return the saved user
+      return this.signToken(user.id, user.email);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -60,19 +62,26 @@ export class AuthService {
       throw new ForbiddenException('Credentials incorrect');
     }
     // every thing is ok, send back the user
-    delete user.hash;
-    return user;
+    return this.signToken(user.id, user.email);
   }
 
+  /**
+   * token 验证
+   * @param userId
+   * @param email
+   */
   async signToken(userId: number, email: string) {
     const payload = {
       sub: userId,
       email,
     };
-
-    return this.jwt.signAsync(payload, {
+    const token = await this.jwt.signAsync(payload, {
       expiresIn: '15m',
-      secret: '',
+      secret: this.config.get('JWT_SECRET'),
     });
+
+    return {
+      access_token: token,
+    };
   }
 }
