@@ -1,9 +1,77 @@
-### 注册用户
+### 用户注册
 POST {{ host }}/auth/signup
 Accept: application/json
 Content-Type: application/json
 
 {
-  "email": "1233@123.com",
+  "email": "qwe@qwe.com",
   "password": "123"
 }
+
+### 用户登录
+POST {{ host }}/auth/signin
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "qwe@qwe.com",
+  "password": "123"
+}
+
+> {% client.global.set('auth_token', response.body.access_token); %}
+
+### 获取用户信息
+GET {{ host }}/users/me
+Authorization: Bearer {{ auth_token }}
+
+### 编辑用户信息
+PATCH {{ host }}/users/edit
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ auth_token }}
+
+{
+  "firstName": "firstName",
+  "lastName": "lastName"
+}
+
+### 创建用户标签
+POST {{ host }}/bookmarks/create
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ auth_token }}
+
+{
+  "title": "bookmark3",
+  "description": "description3",
+  "link": "link3"
+}
+
+> {% client.global.set('bookmarkId', response.body.id); %}
+
+### 获取用户所有标签
+GET {{ host }}/bookmarks/all
+Accept: application/json
+Authorization: Bearer {{ auth_token }}
+
+### 根据标签id获取标签信息
+GET {{ host }}/bookmarks/{{ bookmarkId }}
+Accept: application/json
+Authorization: Bearer {{ auth_token }}
+
+### 根据标签id编辑标签
+PATCH {{ host }}/bookmarks/{{ bookmarkId }}
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{ auth_token }}
+
+{
+  "title": "编辑后标签1",
+  "description": "编辑后标签描述1",
+  "link": "编辑后标签link1"
+}
+
+### 根据标签id删除标签
+DELETE {{ host }}/bookmarks/{{ bookmarkId }}
+Content-Type: application/json
+Authorization: Bearer {{ auth_token }}
